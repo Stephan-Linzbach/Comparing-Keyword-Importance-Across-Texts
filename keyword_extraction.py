@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument(
         "--corpus",
         type=str,
-        # default=corpus_default,
+        default=corpus_default,
         help=help_corpus,
     )
 
@@ -300,23 +300,58 @@ def generate_timestamp():
     # Construct the filename
     filename = f"{timestamp_str}"
     return filename
-
 def write_to_csv(output_file, data):
+    if not data:
+        print("no data to write", output_file)
+        return False
+
+    # Safely collect all word sets (skip empty / missing)
+    word_sets = []
+    for content in data.values():
+        words = content.get("words", [])
+        if words:
+            # ensure strings (numpy.str_ -> str)
+            word_sets.append(set(str(w) for w in words))
+
+    if not word_sets:
+        print("no words found in data", output_file)
+        return False
+
+    all_words = sorted(set().union(*word_sets))
+
     with open(output_file, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-
-        # Write the header row
+        # header: Word + document labels (preserve order)
         writer.writerow(["Word"] + list(data.keys()))
-        all_words = set.union(*[set(w["words"]) for w in data.values()])
 
-        # Iterate over the data and write rows
+        # Pre-build dicts for fast lookup and safe type conversion
+        doc_maps = []
+        for content in data.values():
+            words = [str(w) for w in content.get("words", [])]
+            values = content.get("values", [])
+            mapping = {}
+            for i, w in enumerate(words):
+                try:
+                    v = values[i] if i < len(values) else None
+                except Exception:
+                    v = None
+                # convert numpy scalars to native types
+                if isinstance(v, np.generic):
+                    try:
+                        v = v.item()
+                    except Exception:
+                        v = float(v)
+                mapping[w] = v
+            doc_maps.append(mapping)
+
+        # write rows
         for word in all_words:
-            values = []
-            for document, content in data.items():
-                word_dict = dict(zip(content["words"], content["values"]))
-                values.append(word_dict.get(word, None))
-            writer.writerow([word] + values)
-    print('output file compiled', {output_file})
+            row = [word]
+            for mapping in doc_maps:
+                row.append(mapping.get(word, None))
+            writer.writerow(row)
+
+    print('output file compiled', output_file)
     return True
 
 def main():

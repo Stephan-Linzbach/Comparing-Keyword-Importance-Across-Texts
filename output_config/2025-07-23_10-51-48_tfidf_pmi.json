@@ -1,1 +1,0 @@
-{"corpus": "data/default_corpus-copy.json", "comparison_corpus": "./data/default_comparison_corpus.json", "language": "english", "min_df": 0, "more_freq_than": 0, "less_freq_than": 20, "method": "tfidf_pmi", "stop_words": "english", "only_words": true, "return_values": true, "max_df": 0.3}

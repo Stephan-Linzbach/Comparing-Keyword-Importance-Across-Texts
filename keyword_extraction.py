@@ -300,17 +300,21 @@ def generate_timestamp():
     # Construct the filename
     filename = f"{timestamp_str}"
     return filename
+# ...existing code...
 def write_to_csv(output_file, data):
+    """
+    Write transposed CSV: one row per document, one column per word.
+    Header: Document, <word_1>, <word_2>, ...
+    """
     if not data:
         print("no data to write", output_file)
         return False
 
-    # Safely collect all word sets (skip empty / missing)
+    # Collect all words (as strings) across documents
     word_sets = []
     for content in data.values():
         words = content.get("words", [])
         if words:
-            # ensure strings (numpy.str_ -> str)
             word_sets.append(set(str(w) for w in words))
 
     if not word_sets:
@@ -319,36 +323,35 @@ def write_to_csv(output_file, data):
 
     all_words = sorted(set().union(*word_sets))
 
+    # Pre-build per-document mappings (word -> value) with safe conversions
+    doc_maps = []
+    doc_labels = []
+    for label, content in data.items():
+        doc_labels.append(label)
+        words = [str(w) for w in content.get("words", [])]
+        values = content.get("values", [])
+        mapping = {}
+        for i, w in enumerate(words):
+            v = values[i] if i < len(values) else None
+            # convert numpy scalar to native Python type
+            if isinstance(v, np.generic):
+                try:
+                    v = v.item()
+                except Exception:
+                    try:
+                        v = float(v)
+                    except Exception:
+                        v = None
+            mapping[w] = v
+        doc_maps.append(mapping)
+
+    # Write CSV with documents as rows and words as columns
     with open(output_file, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        # header: Word + document labels (preserve order)
-        writer.writerow(["Word"] + list(data.keys()))
+        writer.writerow(["Document"] + all_words)
 
-        # Pre-build dicts for fast lookup and safe type conversion
-        doc_maps = []
-        for content in data.values():
-            words = [str(w) for w in content.get("words", [])]
-            values = content.get("values", [])
-            mapping = {}
-            for i, w in enumerate(words):
-                try:
-                    v = values[i] if i < len(values) else None
-                except Exception:
-                    v = None
-                # convert numpy scalars to native types
-                if isinstance(v, np.generic):
-                    try:
-                        v = v.item()
-                    except Exception:
-                        v = float(v)
-                mapping[w] = v
-            doc_maps.append(mapping)
-
-        # write rows
-        for word in all_words:
-            row = [word]
-            for mapping in doc_maps:
-                row.append(mapping.get(word, None))
+        for label, mapping in zip(doc_labels, doc_maps):
+            row = [label] + [mapping.get(w, "") for w in all_words]
             writer.writerow(row)
 
     print('output file compiled', output_file)

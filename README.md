@@ -2,7 +2,7 @@
 
 ## Description
 
-This method identifies and ranks the most important words in a collection of documents, such as articles, speeches, or social media posts, by analyzing their frequency and uniqueness within each document. Using measures like [TF-IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf), [PMI](https://en.wikipedia.org/wiki/Pointwise_mutual_information), and [Log Odds Ratio](https://en.wikipedia.org/wiki/Odds_ratio), it highlights terms that are especially relevant to a specific document while contrasting them with others in the collection. This approach is ideal for uncovering key themes, comparing language use across texts, and tracking shifts in terminology or public discourse over time, making it a valuable tool for summarizing content or analyzing trends.
+This method identifies the most important words in a collection of documents, such as articles, speeches, or social media posts, by ranking the words for each document according to their frequency within the document and their uniqueness to the document. The specific available measures use [TF-IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf), [PMI](https://en.wikipedia.org/wiki/Pointwise_mutual_information), and [Log Odds Ratio](https://en.wikipedia.org/wiki/Odds_ratio). This approach is ideal for uncovering key themes, comparing language use across texts, and tracking shifts in terminology or public discourse over time, making it a valuable tool for summarizing content or analyzing trends.
 
 |   | TF-IDF | Log Odds Ratio | PMI |
 |:-----------------|:----------------:|:----------------:|:----------------:|
@@ -12,16 +12,16 @@ This method identifies and ranks the most important words in a collection of doc
 
 ## Use Cases
 
-* __Studying climate change discourse on Twitter over time:__ By extracting and comparing keywords, this method can reveal emerging terms (e.g., *carbon neutrality*), diminishing terms (e.g., *global warming*), and stable terms (e.g., *climate crisis*), offering insights into evolving public conversations and priorities.
-* __Analyzing political speeches to identify shifts in rhetoric:__ Social scientists can track how key terms (e.g., *freedom*, *equality*, *security*) gain or lose prominence across different administrations or during election campaigns, providing a lens into changing political priorities and strategies.
-* __Examining public sentiment in online forums:__ By comparing keyword importance across threads, researchers can uncover dominant themes, recurring concerns, or evolving opinions on topics like healthcare, education, or economic policies.
-* __Studying cultural narratives in literature or media:__ Social scientists can analyze how specific terms (e.g., *identity*, *tradition*, *modernity*) are emphasized in different texts, revealing underlying societal values, conflicts, or trends over time.
+* __Studying climate change discourse on Twitter over time:__ By extracting keywords over time (a "document" contains all tweets of a year), this method can reveal emerging terms (e.g., *carbon neutrality*), diminishing terms (e.g., *global warming*), and stable terms (e.g., *climate crisis*), offering insights into evolving public conversations and priorities.
+* __Analyzing political speeches to identify shifts in rhetoric:__ By extracting keywords for specific key moments in time (a "document" contains all texts for different key moments, e.g., before different elections), this method can reveal prominent themes across different administrations or during election campaigns, providing a lens into changing political priorities and strategies.
+* __Examining topical discourse in online forums:__ By extracting keywords across forums or threads (a "document" contains all texts of a forum or thread), this method can reveal specific themes in different discussions, e.g. contrasting discourse on topics like healthcare, education, or economic policies (taking a forum for each of those).
+* __Studying cultural narratives in literature or media:__ By examining the output scores of specific terms (e.g., *identity*, *tradition*, *modernity*), this method can reveal how these are emphasized in different texts, indicating for example different underlying societal values, conflicts, or trends.
 
 ## Input Data
 
-The method handles digital behavioral data, including social media posts, comments, search queries, clickstream text (e.g., website titles), forum threads, and open-text survey responses.
+The method handles all texts, including social media posts, comments, search queries, clickstream text (e.g., website titles), forum threads, and open-text survey responses.
 
-The corpus data used in the script is stored in JSON format at [data/default_corpus.json](https://github.com/Stephan-Linzbach/Comparing-Keyword-Importance-Across-Texts/blob/main/data/default_corpus.json) and looks something like this:
+The method takes as input data in JSON format (one object, mapping a document name to the document content). See [data/default_corpus.json](/data/default_corpus.json) for an example. The first three documents:
 
 ```JSON
 {
@@ -31,108 +31,62 @@ The corpus data used in the script is stored in JSON format at [data/default_cor
 }
 ```
 
-<u>__*Note*__: The corpus should ideally be a larger text dataset to produce more meaningful results.</u>
+Note: The method is intended for datasets containing at least a thousand words.
 
 ## Output Data
 
-The method will produce a CSV in the following form:
+The method will produce a CSV in the following form, showing the score for each word (row) for each document (column):
 
-| Words       |     Document A      |     Document B      |          Document C |
-|:-----------------|:-----------------:|:-----------------:|-----------------:|
-| progressive | 0.24816330799414105 | 0.24816330799414105 |  1.2392023539955106 |
-| ones        |  0.636647135255376  |  0.636647135255376  |  0.6276861812567451 |
-| position    | 0.24816330799414105 | 0.24816330799414105 |  1.2392023539955106 |
-| solution    |  0.636647135255376  |  0.636647135255376  |  0.6276861812567451 |
-| center      | 0.20851385530561406 |  1.208513855305614  | 0.19955290130698336 |
-| liberal     |  1.208513855305614  | 0.20851385530561406 | 0.19955290130698336 |
+| Words       |     Document A      |     Document B      |     Document C      |
+|:------------|:-------------------:|:-------------------:|--------------------:|
+| progressive | 0.24816330799414105 | 0.24816330799414105 | 1.2392023539955106  |
+| ones        | 0.636647135255376   | 0.636647135255376   | 0.6276861812567451  |
+| position    | 0.24816330799414105 | 0.24816330799414105 | 1.2392023539955106  |
+| solution    | 0.636647135255376   | 0.636647135255376   | 0.6276861812567451  |
+| center      | 0.20851385530561406 | 1.208513855305614   | 0.19955290130698336 |
+| liberal     | 1.208513855305614   | 0.20851385530561406 | 0.19955290130698336 |
 
-Moreover, in the [output_config/](https://github.com/Stephan-Linzbach/Comparing-Keyword-Importance-Across-Texts/tree/main/output_config) directory, you will find a JSON file that saves all the used parameters for the resulting table.
-
-```JSON
-{
-    "corpus": "/path/to/your_corpus.json",
-    "comparison_corpus": "",
-    "language": "english",
-    "min_df": null,
-    "more_freq_than": 0,
-    "less_freq_than": 100,
-    "method": "pmi",
-    "only_words": true,
-    "return_values": true
-}
-```
+For reproducibility, the used configuration is stored in the [output_config/](./output_config) directory.
 
 ## Hardware Requirements
 
-The method runs on a small virtual machine provided by a cloud computing company (2 x86 CPU core, 4 GB RAM, 40GB HDD).
+The method runs on a small virtual machine (2 x86 CPU core, 4 GB RAM, 40GB HDD).
 
 ## Environment Setup
 
-- Install Python version>=3.9 (preferably through Anaconda)
-
-```bash
-conda create -n env python=3.11
-```
-
-- Download the repository or directly copy the raw code from [keyword_extraction.py](https://github.com/Stephan-Linzbach/Comparing-Keyword-Importance-Across-Texts/blob/main/keyword_extraction.py) and requirements.txt
-
-```bash
-git clone https://git.gesis.org/bda/keyword_extraction.git
-```
+- If not done already install Python version>=3.9, e.g.
+  
+  ```bash
+  conda create -n env python=3.11
+  ```
 
 - Install all the packages and libraries with specific versions required to run this method:
-
-```bash
-pip install -r requirements.txt
-```
+  
+  ```bash
+  pip install -r requirements.txt
+  ```
 
 ## How to Use
 
-You can configure the parameters in the [config.json](https://github.com/Stephan-Linzbach/Comparing-Keyword-Importance-Across-Texts/blob/main/config.json) file and run the script:
+Run with the datasets and parameters as specified in the [config.json](config.json):
 
 ```bash
 python keyword_extraction.py
 ```
 
-Alternatively, you can set the parameters directly in the command line when running the script.
-
-To see the list of parameters you can specify, use the **Command Line Options**:
-
-```bash
-python keyword_extraction.py --help
-```
-
-Below is the output of the `--help` command, which lists all available options for the script:
-
-```text
-options:
-    -h, --help            show this help message and exit
-    --corpus CORPUS       A path to a json corpus in this format ./data/default_corpus.json.
-    --comparison_corpus COMPARISON_CORPUS
-                                                A path to a json comparison_corpus in this format ./data/default_corpus.json. You need this for the log_odd ratio.
-    --config CONFIG       If you do not have a config.json in the working directory or want to set your setting with the cli tool set this var to False.
-    --language LANGUAGE   Language (default: english)
-    --min_df MIN_DF       Minimum document frequency (default: 1)
-    --more_freq_than MORE_FREQ_THAN
-                                                Frequency threshold for more frequent words (default: 0)
-    --less_freq_than LESS_FREQ_THAN
-                                                Frequency threshold for less frequent words (default: 1.0)
-    --method METHOD       Choose a method from the list of implemented methods ['log_odds', 'tfidf', 'pmi', 'tfidf_pmi']
-    --stop_words STOP_WORDS
-                                                Exclude stop_words from this list ['english'].
-    --only_words ONLY_WORDS
-                                                Exclude numbers, urls, and everything that is not alphabetic.
-    --return_values RETURN_VALUES
-                                                Use this parameter if you want the associated values of the respective method to be returned.
-```
-
-It also provides explanations on the role of the parameters in altering the method behavior. Next, execute:
+You can also override the parameters using command line options, e.g.:
 
 ```bash
 python keyword_extraction.py --method pmi --corpus /path/to/your_corpus.json
 ```
 
-## Example Commands and Parameters
+See the help for a list of available options:
+
+```bash
+python keyword_extraction.py --help
+```
+
+## Technical Details
 
 Below are example commands demonstrating how to use the method with different configurations and parameters to extract and analyze keyword importance effectively.
 

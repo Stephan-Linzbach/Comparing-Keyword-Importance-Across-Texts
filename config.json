@@ -1,4 +1,5 @@
 {
+ "corpus": "./data/default_corpus.json",
  "comparison_corpus": "./data/default_comparison_corpus.json", 
  "language": "english", 
  "min_df": 0, 

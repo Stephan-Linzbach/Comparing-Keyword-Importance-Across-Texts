@@ -12,7 +12,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PAT }}
         run: |
-          gh api repos/Stephan-Linzbach/Automated_Github_Check_Workflow/dispatches \
+          gh api repos/StephanLinzbach/Automated_Github_Check_Workflow/dispatches \
             -f event_type=report_creator \
             -f client_payload[repository_full_name]="${{ github.repository }}" \
             -f client_payload[repo_hash]="${{ github.sha }}" \

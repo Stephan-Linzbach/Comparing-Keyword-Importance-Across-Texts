@@ -1,0 +1,19 @@
+name: Report Trigger
+
+on:
+  workflow_dispatch:
+
+jobs:
+  trigger-the-report-creation-workflow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger repository_dispatch
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
+        run: |
+          gh api repos/GitbubUser3221/Automated_Github_Check_Workflow/dispatches \
+            -f event_type=report_creator \
+            -f client_payload[repository_full_name]="${{ github.repository }}" \
+            -f client_payload[repo_hash]="${{ github.sha }}" \
+            -f client_payload[readme]="README.md"

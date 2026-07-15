@@ -168,7 +168,7 @@ python keyword_extraction.py --config False --method log_odds --corpus /path/to/
 
 A comparison corpus is required to determine word frequencies under "normal" circumstances, reducing noise and highlighting significant terms.
 
-## Technical Detail
+## Technical Details
 
 This method scores words with either [TF-IDF](https://en.wikipedia.org/wiki/Tf%E2%80%93idf), [PMI](https://en.wikipedia.org/wiki/Pointwise_mutual_information), or [Log Odds Ratio](https://en.wikipedia.org/wiki/Odds_ratio) by performing the following steps:
 

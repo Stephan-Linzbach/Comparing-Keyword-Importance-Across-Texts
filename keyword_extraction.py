@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument(
         "--corpus",
         type=str,
-        # default=corpus_default,
+        default=corpus_default,
         help=help_corpus,
     )
 
@@ -300,23 +300,61 @@ def generate_timestamp():
     # Construct the filename
     filename = f"{timestamp_str}"
     return filename
-
+# ...existing code...
 def write_to_csv(output_file, data):
+    """
+    Write transposed CSV: one row per document, one column per word.
+    Header: Document, <word_1>, <word_2>, ...
+    """
+    if not data:
+        print("no data to write", output_file)
+        return False
+
+    # Collect all words (as strings) across documents
+    word_sets = []
+    for content in data.values():
+        words = content.get("words", [])
+        if words:
+            word_sets.append(set(str(w) for w in words))
+
+    if not word_sets:
+        print("no words found in data", output_file)
+        return False
+
+    all_words = sorted(set().union(*word_sets))
+
+    # Pre-build per-document mappings (word -> value) with safe conversions
+    doc_maps = []
+    doc_labels = []
+    for label, content in data.items():
+        doc_labels.append(label)
+        words = [str(w) for w in content.get("words", [])]
+        values = content.get("values", [])
+        mapping = {}
+        for i, w in enumerate(words):
+            v = values[i] if i < len(values) else None
+            # convert numpy scalar to native Python type
+            if isinstance(v, np.generic):
+                try:
+                    v = v.item()
+                except Exception:
+                    try:
+                        v = float(v)
+                    except Exception:
+                        v = None
+            mapping[w] = v
+        doc_maps.append(mapping)
+
+    # Write CSV with documents as rows and words as columns
     with open(output_file, mode='w', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
+        writer.writerow(["Document"] + all_words)
 
-        # Write the header row
-        writer.writerow(["Word"] + list(data.keys()))
-        all_words = set.union(*[set(w["words"]) for w in data.values()])
+        for label, mapping in zip(doc_labels, doc_maps):
+            row = [label] + [mapping.get(w, "") for w in all_words]
+            writer.writerow(row)
 
-        # Iterate over the data and write rows
-        for word in all_words:
-            values = []
-            for document, content in data.items():
-                word_dict = dict(zip(content["words"], content["values"]))
-                values.append(word_dict.get(word, None))
-            writer.writerow([word] + values)
-    print('output file compiled', {output_file})
+    print('output file compiled', output_file)
     return True
 
 def main():
